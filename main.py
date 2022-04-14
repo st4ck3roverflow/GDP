@@ -29,21 +29,21 @@ def read_data_txt(filename: str):
 
 def thread_func(i, proxy):
     for f in i:
-        print(parser.get_info(f[0], f[1], proxy))
+        print(parser.get_info_test(f[0], f[1]))
 
 
 def main():
     proxies = [
-        "http://82.198.188.10:80",
-        "http://185.221.161.85:80",
-        "http://185.221.160.176:80",
-        "http://185.174.138.19:80"
+        "https://217.174.106.15:8118",
+        "https://188.170.233.107:3128",
+        "https://91.224.62.194:8080",
+        "https://188.170.233.108:3128",
+        "https://188.170.233.111:3128"
     ]
     threads_dict = []
-    txt_data = read_data_txt("data.txt")
-    queue = equal_split(txt_data, 3)
-    t = time.time()
+    queue = equal_split(read_data_txt("data.txt"), 3)
 
+    t = time.time()
     for i in queue:
         x = threading.Thread(target=thread_func, args=(i, proxies[queue.index(i)],))
         threads_dict.append(x)
@@ -54,7 +54,15 @@ def main():
     print("Finished in "+str(time.time() - t))
 
 
+def test():
+    num = 9913926549
+    issue_date = "2019-12-27"
+    for i in range(5):
+        parser.get_info_test(str(num), issue_date, "socks5://195.2.71.201:16072")
+        num += 1
+
+
 if __name__ == "__main__":
     startup()
-    main()
+    test()
 
