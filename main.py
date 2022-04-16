@@ -1,8 +1,12 @@
 import pyfiglet
-import threading
+from concurrent.futures import ThreadPoolExecutor
 import time
+import sqlite3
 import parser
 import prog_config
+
+db_conn = sqlite3.connect("gdp.sqlite")
+data_queue = []
 
 
 def startup():
@@ -27,42 +31,42 @@ def read_data_txt(filename: str):
     return result
 
 
-def thread_func(i, proxy):
-    for f in i:
-        print(parser.get_info_test(f[0], f[1]))
+def parser_thread(data, proxy, thread_id):
+    for f in data:
+        data = parser.get_info(int(f[0]), f[1], proxy=proxy, thread_id=thread_id)
+        if "nameop" not in data['doc']:
+            data["doc"]["nameop"] = "1337"
+        if "codeop" not in data['doc']:
+            data["doc"]["codeop"] = "1337"
+        print("got info")
+        data_queue.append(data)
+        print("gaysex")
+        time.sleep(2)
 
 
 def main():
     proxies = [
-        "https://217.174.106.15:8118",
-        "https://188.170.233.107:3128",
-        "https://91.224.62.194:8080",
-        "https://188.170.233.108:3128",
-        "https://188.170.233.111:3128"
+        "socks5://Selxoxby:W3y6KaD@94.45.191.98:45786",
+        "socks5://Selxoxby:W3y6KaD@93.88.79.66:45786",
+        "socks5://Selxoxby:W3y6KaD@92.62.115.144:45786",
+        "socks5://Selxoxby:W3y6KaD@85.202.87.115:45786",
+        "socks5://Selxoxby:W3y6KaD@91.90.214.251:45786"
     ]
-    threads_dict = []
     queue = equal_split(read_data_txt("data.txt"), 3)
-
     t = time.time()
-    for i in queue:
-        x = threading.Thread(target=thread_func, args=(i, proxies[queue.index(i)],))
-        threads_dict.append(x)
-    for i in threads_dict:
-        i.start()
-    for i in threads_dict:
-        i.join()
-    print("Finished in "+str(time.time() - t))
-
-
-def test():
-    num = 9913926549
-    issue_date = "2019-12-27"
-    for i in range(5):
-        parser.get_info_test(str(num), issue_date, "socks5://195.2.71.201:16072")
-        num += 1
+    with ThreadPoolExecutor() as executor:
+        for i in queue:
+            queue_index = queue.index(i)
+            executor.submit(parser_thread, i, proxies[queue_index], queue_index)
+    print(data_queue)
+    for data in data_queue:
+        request = f"INSERT INTO data (num,date,bdate,cat,srok,nameop,codeop,doc_status) VALUES ({data['doc']['num']}, {data['doc']['date']}, {data['doc']['bdate']}, '{data['doc']['cat']}', {data['doc']['srok']}, {data['doc']['nameop']}, {data['doc']['codeop']}, {data['doc']['type']})"
+        print(request)
+        db_conn.execute(request)
+    db_conn.commit()
+    print("Finished in " + str(time.time() - t))
 
 
 if __name__ == "__main__":
     startup()
-    test()
-
+    main()
